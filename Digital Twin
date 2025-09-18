@@ -1,0 +1,203 @@
+#!/usr/bin/env python3
+"""
+Assaf's Digital Twin - Crew AI Example Agent
+A simple example of a Crew AI agent system that represents a digital twin of Assaf.
+
+This example demonstrates:
+- Creating two specialized agents - Assaf's Digital Twin and a personal representative
+- Defining one task for each of the two agents - Course searching task and Email writing task
+- Creating a crew with the two agents and the two tasks
+- Running the crew from the terminal
+
+Author: Assaf Shtalrid
+"""
+
+!pip install crewai crewai-tools python-dotenv
+
+import os
+from crewai import Agent, Task, Crew, Process
+from crewai_tools import SerperDevTool, FileWriterTool, ScrapeWebsiteTool, WebsiteSearchTool
+
+# Set up OpenAI API Key 
+# For this example, we'll use placeholder values
+os.environ["OPENAI_API_KEY"] = "sk-XXXX"
+
+def create_Assaf_Digital_Twin_agent():
+    """Create a Digital Twin agent that specializes as Assafs personal assistance."""
+    return Agent(
+        role="Assaf_Digital_Twin",
+        goal="""As Assafs digital Twin, your goal is to serve as his personal
+        assistant and complete tasks for him. You will accomplish this based
+        on your knowledge of Assafs background, including his areas of interest,
+        skills, past experience, and personal preferences.""",
+        backstory="""You are Assafs digital twin and have been trained to know
+        his background well in order to perform tasks for him in the best way
+        possible. You know that Assaf is a student in the SFMBA program at MIT
+        Sloan and is taking the AI Studio course at the MIT Media Lab.
+        1. Interests and Experience: Before arriving at the program, Assaf served
+        as the Head of the AI and DS R&D department. His work primarily involved
+        using time-series classifiers on metadata and integrating knowledge
+        graphs to generate business insights related to human behavior profiling.
+        Over the past two years, they have also incorporated Large Language
+        Models (LLMs) on text and are exploring their use on metadata. In the
+        world of graph analytics, they have been leveraging techniques like
+        collaborative filtering and label propagation. Going forward, Assaf
+        wants to explore the use of LLMs and Graph Transformers for building
+        personalized AI agents that represent the behavioral profile derived
+        from an individual's historical activity context as well as from
+        network dynamics.
+        2. Skills: By training, Assaf is an electrical and electronics engineer,
+        but for over 10 years, he has been in senior management and is no longer
+        hands-on. He understands technology but is looking to gain a deeper
+        understanding of new technological concepts.
+        3. Personality: Assaf is an open and social person who places an emphasis
+        on interpersonal relationships.""",
+        verbose=True,
+        allow_delegation=False,
+        #tools=[
+        #    SerperDevTool(),
+        #    ScrapeWebsiteTool(),
+        #    WebsiteSearchTool()]
+    )
+
+def create_personal_representative_agent():
+    """Create a personal representative agent that specializes in the representation of Assaf."""
+    return Agent(
+        role='personal representative',
+        goal="""To represent Assaf and reach out for others on behalf of Assaf by the
+        creation and usage of clear, engaging, and well-structured written content""",
+        backstory="""You are a skilled representative with high writing, expressive and
+        persuasive abilities. You excel at taking complex information and presenting
+        it in a clear, accessible manner that engages and persuases others.""",
+        verbose=True,
+        allow_delegation=False,
+        tools=[FileWriterTool()]  # Tool to write files
+    )
+
+def create_course_searchig_task(agent, topic, institute):
+    """Create a course searchig task for the Assaf_Digital_Twin_agent."""
+    return Task(
+        description=f"""Search courses related to the topic: {topic} in the institute: {institute}
+
+        Your task is to:
+        1. Search the Web and find relevant courses that are taught in the 2025-2026 academic year
+        2. Extract description and key information from each course
+        3. Extract the course name, course number, and the semester and year the course is being taught
+        4. Identify the main benefits and challenges in each course
+        5. Select the top 3 courses that you think that will fit Assaf the best
+        based on the knowledge you got on him and the findings from the search you made
+        6.Summarize your findings in a structured format
+
+        Focus on credible sources and current information.""",
+        expected_output="""A comprehensive search summary containing:
+        - Short descriptions for each of the 3 relevant courses
+        - Key benefits and challenges for each course
+        - Key points that explaine why each course is the best fit for Assaf
+        - Key points to persuade the faculty in each course to accept Assaf to the course
+        based on Assaf backround and give relevant examples that support these points
+        - Short detailed summary of the faculty lecturers that teaches the course, elaborating on 
+        key points on their backround that could help the personal representative to 
+        reach out to them and convince them""",
+        agent=agent
+    )
+
+def create_writing_Email_task(agent, search_output):
+    """Create an Email writing task for the personal representative agent."""
+    return Task(
+        description=f"""Based on the search findings, create 3 different well-structured Email draft
+        to be sent to directly to the faculty lecturers of the 3 courses that Assaf might be intrested in,
+        in order to persuade them to accept Assaf to the courses.
+
+        Search findings to use: {search_output}
+
+        Your task for each of the 3 courses is to:
+        1. Write an engaging and compeling email draft to convince the 
+        lecturer to accept Assaf to the course
+        2. Highlight the main benefits of the course that meets Assaf's interests and goals
+        3. Highlight how Assaf can contribute to the course 
+        3. Include examples and explanations
+        4. Draft the email in a warm and friendly tone, with a touch of subtle humor
+        
+        Finally, save all 3 emails to a file called 'email_drafts.md'
+        Each email should be approximately 200-300 words.""",
+
+        expected_output="""3 different well-written emails saved as 'email_drafts.md' containing:
+        - Direct appeal to the course lecturer requesting to be accepted into the course
+        - Mention the course name, course number, and the semester and year the course is being taught 
+        - Clear and compelling explanations of how the course can contribute to Assaf and how 
+        Assaf can contribute to the course
+        - Connect the lecturer interests with Assaf's intrests and how they can help each other
+        - Thoughtful conclusion""",
+        agent=agent
+    )
+
+def main():
+    """Main function to run Assaf's Crew AI example."""
+    print("🚀 Starting Assaf's Crew AI Example")
+    print("=" * 50)
+
+    # Get topic from user input
+    topic = input("Enter a topic you'd like to search courses in: ")
+    if not topic.strip():
+        topic = "Artificial Intelligence"  # Default topic
+        print(f"Using default topic: {topic}")
+
+    print(f"\n📚 Topic: {topic}")
+    print("=" * 50)
+
+    # Get topic from user input
+    institute = input("Enter an institute you'd like to search in: ")
+    if not institute.strip():
+        institute = "MIT"  # Default institue
+        print(f"Using default institue: {institute}")
+
+    print(f"\n📚 institute: {institute}")
+    print("=" * 50)
+
+    # Create agents
+    print("\n🤖 Creating AI agents...")
+    Assaf_Digital_Twin = create_Assaf_Digital_Twin_agent()
+    personal_representative = create_personal_representative_agent()
+
+    # Create tasks
+    print("📋 Setting up tasks...")
+    course_searchig_task = create_course_searchig_task(Assaf_Digital_Twin, topic, institute)
+    writing_Email_task = create_writing_Email_task(personal_representative, course_searchig_task.output)
+
+    # Create crew
+    print("👥 Assembling the crew...")
+    crew = Crew(
+        agents=[Assaf_Digital_Twin, personal_representative],
+        tasks=[course_searchig_task, writing_Email_task],
+        process=Process.sequential,  # Tasks will be executed in sequence
+        verbose=True
+    )
+
+    # Execute the crew
+    print("\n🎯 Starting crew execution...")
+    print("=" * 50)
+
+    try:
+        result = crew.kickoff()
+
+        print("\n✅ Crew execution completed!")
+        print("=" * 50)
+        print("📄 Final Result:")
+        print(result)
+
+        # Check if the email file was created
+        if os.path.exists('email_drafts.md'):
+            print("\n📝 email successfully saved to 'email_drafts.md'")
+            with open('email_drafts.md', 'r') as f:
+                content = f.read()
+                print(f"📊 email draft length: {len(content)} characters")
+        else:
+            print("\n⚠️  email file not found. The writer agent may not have used the file tool.")
+
+    except Exception as e:
+        print(f"\n❌ An error occurred: {str(e)}")
+        print("\n💡 Note: This example requires valid API keys to function properly.")
+        print("Please set your OPENAI_API_KEY environment variable.")
+
+if __name__ == "__main__":
+    main()
